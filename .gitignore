@@ -1,0 +1,64 @@
+# =============================================================================
+# .gitignore – MaxWeather App
+# =============================================================================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# ---- Virtual environments ----
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Environment / secrets – NEVER commit these ----
+.env
+.env.*
+!.env.example
+*.secret
+secrets/
+
+# ---- Pytest / coverage ----
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.coveragerc
+
+# ---- Docker ----
+.docker/
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+*.iws
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Terraform (not in this repo, but just in case) ----
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# ---- Jenkins local workspace ----
+workspace/

@@ -1,0 +1,91 @@
+# =============================================================================
+# Deployment – weather-api
+# =============================================================================
+# Image: crmaxweathersea.azurecr.io/maxweather/weather-api:<tag>
+# AcrPull is already granted to the AKS kubelet identity – no imagePullSecret needed.
+#
+# Prerequisites (run once before first deploy):
+#   kubectl create secret generic weather-api-secret \
+#     --from-literal=OPENWEATHER_API_KEY=<your_key> \
+#     --namespace maxweather
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-api
+  namespace: maxweather
+  labels:
+    app: weather-api
+    version: "1.0.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: weather-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # Zero-downtime deploy
+  template:
+    metadata:
+      labels:
+        app: weather-api
+        version: "1.0.0"
+    spec:
+      # Schedule on the user node pool (not the system pool)
+      nodeSelector:
+        nodepool-type: user
+
+      # Graceful shutdown: drain existing requests before terminating
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: weather-api
+          image: crmaxweathersea.azurecr.io/maxweather/weather-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          # Non-sensitive config from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: weather-api-config
+
+          # Sensitive config from Secret (OPENWEATHER_API_KEY)
+          envFrom:
+            - configMapRef:
+                name: weather-api-config
+            - secretRef:
+                name: weather-api-secret
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001

@@ -1,0 +1,31 @@
+# =============================================================================
+# Service – weather-api
+# =============================================================================
+# Type: Internal Azure LoadBalancer
+# Azure assigns a private IP from the AKS nodes subnet (10.2.8.0/24).
+# APIM (VNet-injected into 10.2.1.0/27, same VNet) routes to this IP.
+#
+# After applying, get the assigned IP with:
+#   kubectl get svc weather-api -n maxweather
+# Then update apim_backend_url in layers/03-api-auth/terraform.tfvars and re-apply.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-api
+  namespace: maxweather
+  labels:
+    app: weather-api
+  annotations:
+    # Creates an internal Azure Load Balancer – NOT publicly accessible
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "snet-aks-nodes-demo-sea"
+spec:
+  type: LoadBalancer
+  selector:
+    app: weather-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80         # APIM calls port 80
+      targetPort: 8000  # App listens on 8000
