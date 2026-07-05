@@ -66,24 +66,15 @@ spec:
     }
 
     stages {
-        // ------------------------------------------------------------------
         stage("Checkout") {
-        // ------------------------------------------------------------------
             steps {
-                container("azure-cli") {
-                    sh "apk add --no-cache git -q 2>/dev/null || true"
-                }
                 checkout scm
                 script {
-                    env.GIT_COMMIT_SHORT = sh(
-                        script: "git rev-parse --short HEAD",
-                        returnStdout: true
-                    ).trim()
-                    echo "Building commit: ${env.GIT_COMMIT_SHORT}"
+                    env.GIT_COMMIT_SHORT = env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : "unknown"
+                    echo "Building commit: \${env.GIT_COMMIT_SHORT}"
                 }
             }
         }
-
         // ------------------------------------------------------------------
         stage("Test") {
         // ------------------------------------------------------------------
