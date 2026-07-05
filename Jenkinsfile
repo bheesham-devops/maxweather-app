@@ -70,6 +70,9 @@ spec:
         stage("Checkout") {
         // ------------------------------------------------------------------
             steps {
+                container("azure-cli") {
+                    sh "apk add --no-cache git -q 2>/dev/null || true"
+                }
                 checkout scm
                 script {
                     env.GIT_COMMIT_SHORT = sh(
@@ -191,7 +194,7 @@ spec:
             echo "❌ Pipeline failed at stage: ${env.STAGE_NAME}. Check logs above."
         }
         always {
-            cleanWs()
+            deleteDir()
         }
     }
 }
