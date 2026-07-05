@@ -84,19 +84,17 @@ spec:
         // ------------------------------------------------------------------
             steps {
                 container("azure-cli") {
-                    dir(APP_DIR) {
-                        sh """
-                            echo "=== Running tests via Docker test stage ==="
-                            az login --identity --client-id e88e02a9-66da-4a33-8028-70661cb638c6
-                            az acr build \\
-                              --registry ${ACR_NAME} \\
-                              --resource-group ${ACR_RG} \\
-                              --target test \\
-                              --file Dockerfile \\
-                              .
-                            echo "=== Tests passed ==="
-                        """
-                    }
+                    sh """
+                        echo "=== Running tests via Docker test stage ==="
+                        az login --identity --client-id e88e02a9-66da-4a33-8028-70661cb638c6
+                        az acr build \\
+                          --registry ${ACR_NAME} \\
+                          --resource-group ${ACR_RG} \\
+                          --target test \\
+                          --file Dockerfile \\
+                          .
+                        echo "=== Tests passed ==="
+                    """
                 }
             }
         }
@@ -109,19 +107,17 @@ spec:
         // ------------------------------------------------------------------
             steps {
                 container("azure-cli") {
-                    dir(APP_DIR) {
-                        sh """
-                            echo "=== Building and pushing final image ==="
-                            az acr build \\
-                              --registry ${ACR_NAME} \\
-                              --resource-group ${ACR_RG} \\
-                              --image ${IMAGE_REPO}:latest \\
-                              --target final \\
-                              --file Dockerfile \\
-                              .
-                            echo "=== Image pushed: ${IMAGE_FULL} ==="
-                        """
-                    }
+                    sh """
+                        echo "=== Building and pushing final image ==="
+                        az acr build \\
+                          --registry ${ACR_NAME} \\
+                          --resource-group ${ACR_RG} \\
+                          --image ${IMAGE_REPO}:latest \\
+                          --target final \\
+                          --file Dockerfile \\
+                          .
+                        echo "=== Image pushed: ${IMAGE_FULL} ==="
+                    """
                 }
             }
         }
@@ -144,29 +140,27 @@ spec:
                           --admin \\
                           --overwrite-existing
                     """
-                    dir(APP_DIR) {
-                        sh """
-                            echo "=== Applying K8s manifests ==="
-                            kubectl apply -f k8s/namespace.yaml
-                            kubectl apply -f k8s/configmap.yaml
-                            kubectl apply -f k8s/deployment.yaml
-                            kubectl apply -f k8s/service.yaml
-                            kubectl apply -f k8s/hpa.yaml
+                    sh """
+                        echo "=== Applying K8s manifests ==="
+                        kubectl apply -f k8s/namespace.yaml
+                        kubectl apply -f k8s/configmap.yaml
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+                        kubectl apply -f k8s/hpa.yaml
 
-                            echo "=== Rolling update to image tag ${IMAGE_TAG} ==="
-                            kubectl set image deployment/weather-api \\
-                              weather-api=${IMAGE_FULL} \\
-                              --namespace ${K8S_NAMESPACE}
+                        echo "=== Rolling update to image tag ${IMAGE_TAG} ==="
+                        kubectl set image deployment/weather-api \\
+                          weather-api=${IMAGE_FULL} \\
+                          --namespace ${K8S_NAMESPACE}
 
-                            echo "=== Waiting for rollout ==="
-                            kubectl rollout status deployment/weather-api \\
-                              --namespace ${K8S_NAMESPACE} \\
-                              --timeout=300s
+                        echo "=== Waiting for rollout ==="
+                        kubectl rollout status deployment/weather-api \\
+                          --namespace ${K8S_NAMESPACE} \\
+                          --timeout=300s
 
-                            echo "=== Service endpoint ==="
-                            kubectl get svc weather-api -n ${K8S_NAMESPACE}
-                        """
-                    }
+                        echo "=== Service endpoint ==="
+                        kubectl get svc weather-api -n ${K8S_NAMESPACE}
+                    """
                 }
             }
         }
