@@ -1,0 +1,165 @@
+{
+  "info": {
+    "_postman_id": "maxweather-api-apim-v2-2026-07-05",
+    "name": "MaxWeather API (via APIM)",
+    "description": "Weather API endpoints via APIM. A collection-level pre-request script fetches an Entra ID bearer token (client_credentials) and caches it in a collection variable. Every request auto-inherits Authorization: Bearer {{access_token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// =================================================================================================",
+          "// Auto-fetch an Entra ID bearer token (client_credentials) and cache it.",
+          "// The collection's Authorization tab references {{access_token}}.",
+          "// ==================================================================================================",
+          "",
+          "const tokenExpiry = pm.collectionVariables.get('access_token_expiry');",
+          "const now = Date.now();",
+          "const existingToken = pm.collectionVariables.get('access_token');",
+          "",
+          "// Reuse cached token if it's still valid (minus 60s buffer)",
+          "if (existingToken && tokenExpiry && now < (parseInt(tokenExpiry, 10) - 60000)) {",
+          "  console.log('✛ Reusing cached token');",
+          "  return;",
+          "}",
+          "",
+          "console.log('ↆ Fetching fresh token from Entra ID...');",
+          "",
+          "const tenantId = pm.collectionVariables.get('tenant_id');",
+          "const clientId = pm.collectionVariables.get('client_id');",
+          "const scope = pm.collectionVariables.get('api_scope');",
+          "const clientSecret = pm.environment.get('client_secret');",
+          "",
+          "if (!clientSecret || clientSecret.includes('PASTE_YOUR')) {",
+          "  throw new Error('client_secret missing - select \"MaxWeather Demo (SEA)\" environment and paste the Key Vault secret');",
+          "}",
+          "",
+          "pm.sendRequest({",
+          "  url: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,",
+          "  method: 'POST',",
+          "  header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
+          "  body: {",
+          "    mode: 'urlencoded',",
+          "    urlencoded: [",
+          "      { key: 'grant_type', value: 'client_credentials' },",
+          "      { key: 'client_id', value: clientId },",
+          "      { key: 'client_secret', value: clientSecret },",
+          "      { key: 'scope', value: scope }",
+          "    ]",
+          "  }",
+          "}, (err, response) => {",
+          "  if (err) { throw new Error('Token request failed: ' + err.message); }",
+          "  const json = response.json();",
+          "  if (!json.access_token) {",
+          "    throw new Error('No access_token in response: ' + JSON.stringify(json));",
+          "  }",
+          "  pm.collectionVariables.set('access_token', json.access_token);",
+          "  pm.collectionVariables.set('access_token_expiry', (Date.now() + (json.expires_in * 1000)).toString());",
+          "  console.log(`✓ Token acquired (${json.access_token.length} chars, expires in ${json.expires_in}s)`);",
+          "});",
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "apim_base_url",
+      "value": "https://apim-maxweather-demo-sea.azure-api.net/weather",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "3b711293-95ed-4377-a2b9-0470f8d77929",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "0a2b6552-85d9-4343-8c93-dd3bcb19551d",
+      "type": "string"
+    },
+    {
+      "key": "api_scope",
+      "value": "api://3b711293-95ed-4377-a2b9-0470f8d77929/maxweather-api-demo/.default",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "access_token_expiry",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Current Weather",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{apim_base_url}}/current?city=Singapore",
+          "host": [
+            "{{apim_base_url}}"
+          ],
+          "path": [
+            "current"
+          ],
+          "query": [
+            {
+              "key": "city",
+              "value": "Singapore",
+              "description": "City name (Singapore, London, Tokyo)'"
+            }
+          ]
+        },
+        "description": "Returns current weather. Requires Bearer token with Weather.Read role (auto-injected)."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Weather Forecast",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{apim_base_url}}/forecast?city=Tokyo&days=3",
+          "host": [
+            "{{apim_base_url}}"
+          ],
+          "path": [
+            "forecast"
+          ],
+          "query": [
+            {
+              "key": "city",
+              "value": "Tokyo",
+              "description": "City name"
+            },
+            {
+              "key": "days",
+              "value": "3",
+              "description": "Forecast days (1-10, default 5)"
+            }
+          ]
+        },
+        "description": "Returns forecast. Requires Bearer token with Weather.Read role (auto-injected)."
+      },
+      "response": []
+    }
+  ]
+}
