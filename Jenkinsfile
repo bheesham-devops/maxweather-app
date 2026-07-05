@@ -31,27 +31,17 @@ spec:
   nodeSelector:
     nodepool-type: user
   containers:
-    # Azure CLI – used for az acr build and az aks get-credentials
     - name: azure-cli
       image: mcr.microsoft.com/azure-cli:latest
       command: ["cat"]
       tty: true
       resources:
         requests:
-          cpu: "200m"
-          memory: "256Mi"
-        limits:
-          cpu: "500m"
+          cpu: "300m"
           memory: "512Mi"
-    # kubectl – used for applying manifests and rollout checks
-    - name: kubectl
-      image: bitnami/kubectl:1.29
-      command: ["cat"]
-      tty: true
-      resources:
-        requests:
-          cpu: "100m"
-          memory: "128Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
 """
         }
     }
@@ -159,8 +149,6 @@ spec:
                           --admin \\
                           --overwrite-existing
                     """
-                }
-                container("kubectl") {
                     dir(APP_DIR) {
                         sh """
                             echo "=== Applying K8s manifests ==="
