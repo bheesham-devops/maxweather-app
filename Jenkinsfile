@@ -48,6 +48,7 @@ spec:
 
     environment {
         ACR_NAME        = "crmaxweathersea"
+        ACR_RG          = "rg-maxweather-shared-sea"
         ACR_URL         = "${ACR_NAME}.azurecr.io"
         IMAGE_REPO      = "maxweather/weather-api"
         IMAGE_TAG       = "${BUILD_NUMBER}"
@@ -89,7 +90,7 @@ spec:
                             az login --identity --client-id e88e02a9-66da-4a33-8028-70661cb638c6
                             az acr build \\
                               --registry ${ACR_NAME} \\
-                              --image ${IMAGE_REPO}-test:${IMAGE_TAG} \\
+                              --resource-group ${ACR_RG} \\
                               --target test \\
                               --file Dockerfile \\
                               .
@@ -113,7 +114,7 @@ spec:
                             echo "=== Building and pushing final image ==="
                             az acr build \\
                               --registry ${ACR_NAME} \\
-                              --image ${IMAGE_REPO}:${IMAGE_TAG} \\
+                              --resource-group ${ACR_RG} \\
                               --image ${IMAGE_REPO}:latest \\
                               --target final \\
                               --file Dockerfile \\
