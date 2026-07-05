@@ -53,11 +53,10 @@ spec:
         IMAGE_REPO      = "maxweather/weather-api"
         IMAGE_TAG       = "${BUILD_NUMBER}"
         IMAGE_FULL      = "${ACR_URL}/${IMAGE_REPO}:${BUILD_NUMBER}"
-        IMAGE_LATEST    = "${ACR_URL}/${IMAGE_REPO}:latest"
         K8S_NAMESPACE   = "maxweather"
         AKS_RG          = "rg-maxweather-demo-sea"
         AKS_NAME        = "aks-maxweather-demo-sea"
-        APP_DIR         = "maxweather-app"
+        KUBELET_CLIENT_ID = "e88e02a9-66da-4a33-8028-70661cb638c6"
     }
 
     options {
@@ -86,10 +85,11 @@ spec:
                 container("azure-cli") {
                     sh """
                         echo "=== Running tests via Docker test stage ==="
-                        az login --identity --client-id e88e02a9-66da-4a33-8028-70661cb638c6
+                        az login --identity --client-id ${KUBELET_CLIENT_ID}
                         az acr build \\
                           --registry ${ACR_NAME} \\
                           --resource-group ${ACR_RG} \\
+                          --image ${IMAGE_REPO}-test:${IMAGE_TAG} \\
                           --target test \\
                           --file Dockerfile \\
                           .
@@ -112,6 +112,7 @@ spec:
                         az acr build \\
                           --registry ${ACR_NAME} \\
                           --resource-group ${ACR_RG} \\
+                          --image ${IMAGE_REPO}:${IMAGE_TAG} \\
                           --image ${IMAGE_REPO}:latest \\
                           --target final \\
                           --file Dockerfile \\
@@ -133,7 +134,14 @@ spec:
             steps {
                 container("azure-cli") {
                     sh """
-                        az login --identity --client-id e88e02a9-66da-4a33-8028-70661cb638c6
+                        echo "=== Installing kubectl ==="
+                        curl -fsSL -o /usr/local/bin/kubectl \\
+                          "https://dl.k8s.io/release/v1.35.5/bin/linux/amd64/kubectl"
+                        chmod +x /usr/local/bin/kubectl
+                        kubectl version --client
+                    """
+                    sh """
+                        az login --identity --client-id ${KUBELET_CLIENT_ID}
                         az aks get-credentials \\
                           --resource-group ${AKS_RG} \\
                           --name ${AKS_NAME} \\
