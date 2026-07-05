@@ -86,7 +86,7 @@ spec:
                     dir(APP_DIR) {
                         sh """
                             echo "=== Running tests via Docker test stage ==="
-                            az login --identity
+                            az login --identity --username 64dd4a88-c06e-4d7f-b433-a95be143eb0d
                             az acr build \\
                               --registry ${ACR_NAME} \\
                               --image ${IMAGE_REPO}-test:${IMAGE_TAG} \\
@@ -136,7 +136,7 @@ spec:
             steps {
                 container("azure-cli") {
                     sh """
-                        az login --identity
+                        az login --identity --username 64dd4a88-c06e-4d7f-b433-a95be143eb0d
                         az aks get-credentials \\
                           --resource-group ${AKS_RG} \\
                           --name ${AKS_NAME} \\
